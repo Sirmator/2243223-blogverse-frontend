@@ -6,20 +6,24 @@ async function loginAction({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const method = request.method.toUpperCase();
 
-  const handlers: Record<string, () => Promise<Response | { error: string; }>> = {
+  const handlers: Record<string, () => Promise<Response | { error: string }>> = {
     POST: async () => {
       const creds: LoginForm = {
         email: formData.get('email') as string,
         password: formData.get('password') as string,
       };
       const pathname = new URL(request.url)
-        .searchParams.get("redirectTo") || "/"
+        .searchParams.get("redirectTo") || "/";
 
       try {
-        await login(creds)
-        return redirect(pathname)
-      } catch (error) {
-        return { ok: false, error: error.message || "Login failed. Please try again." }
+        await login(creds);
+        return redirect(pathname);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return { ok: false, error: error.message || "Login failed. Please try again." };
+        } else {
+          return { ok: false, error: "Login failed. Please try again." };
+        }
       }
     },
   };
@@ -31,4 +35,4 @@ async function loginAction({ request }: ActionFunctionArgs) {
   return null;
 };
 
-export default loginAction
+export default loginAction;
